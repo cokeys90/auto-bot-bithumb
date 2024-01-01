@@ -13,41 +13,33 @@ import (
 )
 
 const (
-	accountEndPoint = "/info/account"
+	tradeCancelEndPoint = "/trade/cancel"
 )
 
-type AccountResponse struct {
-	Status string      `json:"status"`
-	Data   AccountData `json:"data"`
+type TradeCancelResponse struct {
+	Status string `json:"status"`
 }
 
-type AccountData struct {
-	Created         string `json:"created"`
-	AccountID       string `json:"account_id"`
-	OrderCurrency   string `json:"order_currency"`
-	PaymentCurrency string `json:"payment_currency"`
-	TradeFee        string `json:"trade_fee"`
-	Balance         string `json:"balance"`
-}
-
-func Account(reqData bithumb.ReqData) (tradeFee, userBalance string) {
-	accountUrl := fmt.Sprintf("%s%s", reqData.BaseUrl, accountEndPoint)
+func TradeCancel(reqData bithumb.ReqData, tradeType, orderId string) (order_id string) {
+	accountUrl := fmt.Sprintf("%s%s", reqData.BaseUrl, tradeCancelEndPoint)
 
 	// 1.API Nonce 생성
 	nonce := fmt.Sprint(time.Now().UnixNano() / int64(time.Millisecond))
 
 	// 2.RequestParam, Sign 할때랑 Body 담을때 같이 사용
 	values := url.Values{}
-	values.Set("endpoint", accountEndPoint)
+	values.Set("endpoint", tradeCancelEndPoint)
 	values.Set("order_currency", reqData.BaseCurrency)
 	values.Set("payment_currency", reqData.QuoteCurrency)
+	values.Set("order_id", orderId)
+	values.Set("type", tradeType)
 	requestParams := values.Encode()
 
 	// 3.API Sign 생성
-	signature, err := GenerateAPISign(accountEndPoint, requestParams, reqData.ApiSecret, nonce)
+	signature, err := GenerateAPISign(tradeCancelEndPoint, requestParams, reqData.ApiSecret, nonce)
 	if err != nil {
 		fmt.Println("빗썸전용 API-Sign 생성 오류:", err)
-		return "-1", ""
+		return ""
 	}
 
 	req, _ := http.NewRequest("POST", accountUrl, bytes.NewBufferString(requestParams))
@@ -63,12 +55,14 @@ func Account(reqData bithumb.ReqData) (tradeFee, userBalance string) {
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
 
-	var accountResponse AccountResponse
-	err = json.Unmarshal(body, &accountResponse)
+	//fmt.Println(string(body))
+
+	var tradeResponse TradeCancelResponse
+	err = json.Unmarshal(body, &tradeResponse)
 	if err != nil {
 		fmt.Println("JSON 디코딩 오류:", err)
-		return "-1", ""
+		return ""
 	}
 
-	return accountResponse.Data.TradeFee, accountResponse.Data.Balance
+	return
 }

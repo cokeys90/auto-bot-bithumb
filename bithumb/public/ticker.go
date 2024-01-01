@@ -3,7 +3,7 @@ package public
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cokeys90/auto-bot-bithumb/utils"
+	"github.com/cokeys90/auto-bot-bithumb/bithumb"
 	"io/ioutil"
 	"net/http"
 )
@@ -28,9 +28,9 @@ type TickerResponse struct {
 	Data   TickerData `json:"data"`
 }
 
-func Ticker(publicBaseURL string, currency string) {
+func Ticker(reqData bithumb.ReqData) (price string) {
 	// ticker 조회
-	url := fmt.Sprintf("%s/ticker/%s", publicBaseURL, currency)
+	url := fmt.Sprintf("%s/public/ticker/%s", reqData.BaseUrl, reqData.TradingPair)
 	res, err := http.Get(url)
 	if err != nil {
 		fmt.Println("API 요청 중 오류 발생:", err)
@@ -52,9 +52,11 @@ func Ticker(publicBaseURL string, currency string) {
 		return
 	}
 
-	// 가격에 쉼표 추가
-	closingPriceWithCommas := utils.AddCommasToPrice(tickerResponse.Data.ClosingPrice)
+	//// 가격에 쉼표 추가
+	//closingPriceWithCommas := utils.AddCommasToPrice(tickerResponse.Data.ClosingPrice)
+	//
+	//// 디코딩한 데이터와 현재 시간 출력
+	//fmt.Printf("현재 가격: %s\n", closingPriceWithCommas)
 
-	// 디코딩한 데이터와 현재 시간 출력
-	fmt.Printf("현재 가격: %s\n", closingPriceWithCommas)
+	return tickerResponse.Data.ClosingPrice
 }

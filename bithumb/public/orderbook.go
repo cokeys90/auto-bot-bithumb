@@ -3,7 +3,8 @@ package public
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cokeys90/auto-bot-bithumb/utils"
+	"github.com/cokeys90/auto-bot-bithumb/bithumb"
+	"github.com/cokeys90/auto-bot-bithumb/utils/cLog"
 	"io/ioutil"
 	"net/http"
 )
@@ -26,8 +27,8 @@ type OrderBookResponse struct {
 	Data   OrderBookData `json:"data"`
 }
 
-func OrderBook(publicBaseURL string, currency string, orderBookCnt int) {
-	url := fmt.Sprintf("%s/orderbook/%s?count=%d", publicBaseURL, currency, orderBookCnt)
+func OrderBook(reqData bithumb.ReqData) (askPrice, bidPrice string) {
+	url := fmt.Sprintf("%s/public/orderbook/%s?count=%d", reqData.BaseUrl, reqData.TradingPair, reqData.OrderBookCnt)
 
 	res, err := http.Get(url)
 	if err != nil {
@@ -51,16 +52,17 @@ func OrderBook(publicBaseURL string, currency string, orderBookCnt int) {
 
 	var orderBookData = orderBookResponse.Data
 
-	for i, ask := range orderBookData.Asks {
-		askPrice := utils.AddCommasToPrice(ask.Price)
-		askQty := utils.AddCommasToPrice(ask.Quantity)
-		fmt.Printf("매도 #%d - 가격: %s, 수량: %s\n", i+1, askPrice, askQty)
+	for _, ask := range orderBookData.Asks {
+		askPrice = cLog.AddCommasToPrice(ask.Price)
+		//fmt.Printf("매도 #%d - 가격: %s, 수량: %s\n", i+1, askPrice, askQty)
 	}
 
-	for i, bid := range orderBookData.Bids {
+	for _, bid := range orderBookData.Bids {
 		// 가격에 쉼표 추가
-		bidPrice := utils.AddCommasToPrice(bid.Price)
-		bidQty := utils.AddCommasToPrice(bid.Quantity)
-		fmt.Printf("매수 #%d - 가격: %s, 수량: %s\n", i+1, bidPrice, bidQty)
+		bidPrice = cLog.AddCommasToPrice(bid.Price)
+		//bidQty := utils.AddCommasToPrice(bid.Quantity)
+		//fmt.Printf("매수 #%d - 가격: %s, 수량: %s\n", i+1, bidPrice, bidQty)
 	}
+
+	return askPrice, bidPrice
 }
